@@ -1,0 +1,211 @@
+services:
+  eureka:
+    image: steeltoeoss/eureka-server:4.1.1
+    ports:
+      - "127.0.0.1:8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://127.0.0.1:8761/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  event-bus:
+    image: apache/kafka:4.1.0
+    hostname: event-bus
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@event-bus:9093
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://event-bus:29092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    ports:
+      - "127.0.0.1:9094:9094"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  kafka-init:
+    image: apache/kafka:4.1.0
+    depends_on:
+      event-bus:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        topics=(
+          "courses.events" "courses.events.DLT"
+          "challenges.events" "challenges.events.DLT"
+          "llm.events" "llm.events.DLT"
+          "chat.events" "chat.events.DLT"
+          "notifications.events" "notifications.events.DLT"
+          "market.events" "market.events.DLT"
+          "sandbox.events" "sandbox.events.DLT"
+          "users.events" "users.events.DLT"
+          "identity.audit.events" "identity.audit.events.DLT"
+          "administration.events" "administration.events.DLT"
+          "accounting.events" "accounting.events.DLT"
+          "mail.events.retry.short"
+          "mail.events.retry.standard"
+          "mail.events.retry.quota"
+          "mail.events.dlt"
+          "roadmap.events"
+          "challenges.results"
+          "challenges.results.DLT"
+        )
+        for topic in "$${topics[@]}"; do
+          /opt/kafka/bin/kafka-topics.sh --create --if-not-exists \
+            --bootstrap-server event-bus:29092 \
+            --topic "$$topic" \
+            --partitions 3 \
+            --replication-factor 1
+        done
+        echo "All topics created successfully."
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: roadmap
+      POSTGRES_USER: roadmap
+      POSTGRES_PASSWORD: roadmap
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roadmap -d roadmap"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  gateway:
+    build: ./mocks
+    command: ["node", "services/gateway.mjs"]
+    ports:
+      - "127.0.0.1:8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      PORT: 8080
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  users:
+    build: ./mocks
+    hostname: users
+    command: ["node", "services/users.mjs"]
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      KAFKA_BOOTSTRAP: event-bus:29092
+      PORT: 8082
+      HOSTNAME: users
+      SERVICE_NAME: users-service
+    depends_on:
+      eureka:
+        condition: service_healthy
+      event-bus:
+        condition: service_healthy
+
+  courses:
+    build: ./mocks
+    hostname: courses
+    command: ["node", "services/courses.mjs"]
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      KAFKA_BOOTSTRAP: event-bus:29092
+      PORT: 8086
+      HOSTNAME: courses
+      SERVICE_NAME: course-service
+      PUBLISH_SEED_ENROLLMENTS: ${PUBLISH_SEED_ENROLLMENTS:-false}
+    depends_on:
+      eureka:
+        condition: service_healthy
+      event-bus:
+        condition: service_healthy
+
+  challenges:
+    build: ./mocks
+    hostname: challenges
+    command: ["node", "services/challenges.mjs"]
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      KAFKA_BOOTSTRAP: event-bus:29092
+      PORT: 8096
+      HOSTNAME: challenges
+      SERVICE_NAME: engine-challenge-service
+    depends_on:
+      eureka:
+        condition: service_healthy
+      event-bus:
+        condition: service_healthy
+
+  backoffice:
+    build: ./mocks
+    hostname: backoffice
+    command: ["node", "services/backoffice.mjs"]
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      KAFKA_BOOTSTRAP: event-bus:29092
+      PORT: 8100
+      HOSTNAME: backoffice
+      SERVICE_NAME: backoffice-service
+    depends_on:
+      eureka:
+        condition: service_healthy
+      event-bus:
+        condition: service_healthy
+
+  roadmap:
+    build: ${ROADMAP_PATH:-../tpi-roadmap}
+    hostname: roadmap
+    depends_on:
+      postgres:
+        condition: service_healthy
+      event-bus:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: ${ROADMAP_PROFILES:-dev,demo}
+      DB_URL: jdbc:postgresql://postgres:5432/roadmap
+      DB_USERNAME: roadmap
+      DB_PASSWORD: roadmap
+      KAFKA_BOOTSTRAP: event-bus:29092
+      KAFKA_TOPIC_ROADMAP: roadmap.events
+      EUREKA_URL: http://eureka:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: roadmap
+      GATEWAY_URL: http://gateway:8080
+      ROADMAP_TECHNICAL_CLIENT_ID: roadmap-service
+      ROADMAP_TECHNICAL_CLIENT_SECRET: mock
+      MOTOR_CLIENT_MODE: http
+      COURSES_CLIENT_MODE: http
+      COURSES_CATALOG_MODE: stub
+      COURSES_SECTIONS_CLIENT_MODE: stub
+      INVENTORY_CLIENT_MODE: stub
+      SIMULATION_ENABLED: ${SIMULATION_ENABLED:-true}
+
+volumes:
+  pgdata:
+  kafka-data:

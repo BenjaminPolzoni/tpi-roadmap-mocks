@@ -1,0 +1,9 @@
+{
+  "name": "mocks",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mocks para el ecosistema de tpi-roadmap",
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  }
+}

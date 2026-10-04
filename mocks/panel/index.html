@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tpi-roadmap-mocks — Panel de Control</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-light: #2d3748;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --success-hover: #059669;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --warning: #f59e0b;
+      --warning-hover: #d97706;
+      --code-bg: #020617;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 4rem;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+    .brand .badge {
+      background: #1e3a8a;
+      color: #93c5fd;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--surface-light);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .card-header h2 { font-size: 1.15rem; font-weight: 600; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius);
+      font-size: 0.825rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-warning:hover { background: var(--warning-hover); }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: var(--success-hover); }
+    .btn-secondary { background: var(--surface-light); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #3b4252; }
+
+    .btn-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .table-responsive { overflow-x: auto; margin-top: 0.5rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    th, td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: rgba(0,0,0,0.25);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .tag-up { background: #064e3b; color: #6ee7b7; }
+    .tag-down { background: #7f1d1d; color: #fca5a5; }
+    .tag-role { background: #1e3a8a; color: #bfdbfe; }
+    .tag-uuid { font-family: monospace; color: #cbd5e1; font-size: 0.8rem; }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .alert-info { background: #1e3a8a; border: 1px solid #2563eb; color: #dbeafe; }
+    .alert-warning { background: #78350f; border: 1px solid #d97706; color: #fef3c7; }
+    .alert-error { background: #7f1d1d; border: 1px solid #ef4444; color: #fee2e2; }
+    .alert-success { background: #064e3b; border: 1px solid #10b981; color: #d1fae5; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.75rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    .form-control {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.5rem 0.75rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+    }
+    textarea.form-control { font-family: monospace; font-size: 0.825rem; min-height: 90px; }
+
+    pre.code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      max-height: 320px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .status-indicator.up { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-indicator.down { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+    .session-banner {
+      background: linear-gradient(90deg, #1e293b, #0f172a);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .session-info { display: flex; flex-direction: column; gap: 0.25rem; }
+    .session-info h3 { font-size: 1rem; color: #fff; }
+    .session-info p { font-size: 0.85rem; color: var(--text-muted); }
+
+    .section-hidden { display: none; }
+    .muted-text { color: var(--text-muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>Panel de Control</h1>
+      <span class="badge">tpi-roadmap-mocks</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showTab('all')">Ver Todo</button>
+      <button class="nav-btn" onclick="showTab('sec-services')">1. Servicios</button>
+      <button class="nav-btn" onclick="showTab('sec-session')">2. Sesión</button>
+      <button class="nav-btn" onclick="showTab('sec-courses')">3. Cursos</button>
+      <button class="nav-btn" onclick="showTab('sec-challenges')">4. Desafíos</button>
+      <button class="nav-btn" onclick="showTab('sec-attempts')">5. Intentos</button>
+      <button class="nav-btn" onclick="showTab('sec-params')">6. Parámetros</button>
+    </nav>
+  </header>
+
+  <div class="container">
+
+    <!-- Global Notice -->
+    <div class="alert alert-info">
+      <span>💡 <strong>Mocks Stack activo:</strong> Este panel corre en el gateway (puerto 8080). Las cookies son compartidas con el frontend (puerto 4200). Recuerda <strong>recargar el front</strong> tras cambiar de sesión.</span>
+      <span class="muted-text" id="clock-display"></span>
+    </div>
+
+    <!-- SECCIÓN 1: SERVICIOS -->
+    <section id="sec-services" class="card">
+      <div class="card-header">
+        <h2>(1) Servicios Registrados en Eureka</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchRegistry()">↻ Refrescar (auto 5s)</button>
+        </div>
+      </div>
+      <div id="services-alert"></div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Servicio (App)</th>
+              <th>Segmento API</th>
+              <th>Estado Eureka</th>
+              <th>Instancia</th>
+              <th>Fallas Inyectables (/api/&lt;seg&gt;/mock/fault)</th>
+              <th>Verificación</th>
+            </tr>
+          </thead>
+          <tbody id="services-tbody">
+            <tr><td colspan="6" class="muted-text">Cargando estado de Eureka...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: SESIÓN -->
+    <section id="sec-session" class="card">
+      <div class="card-header">
+        <h2>(2) Sesión e Identidad</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchSession()">↻ Ver Sesión Actual</button>
+          <button class="btn btn-secondary btn-sm" onclick="fetchUsers()">↻ Recargar Usuarios</button>
+          <button class="btn btn-danger btn-sm" onclick="logout()">Cerrar Sesión</button>
+        </div>
+      </div>
+      <div id="session-alert"></div>
+
+      <div class="session-banner" id="session-display">
+        <div class="session-info">
+          <h3 id="current-user-title">Consultando sesión actual...</h3>
+          <p id="current-user-detail">Llamando a GET /api/users/me...</p>
+        </div>
+        <div>
+          <span class="badge" style="background: #374151; color: #fbbf24; font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            ⚠️ Tras "Entrar como", recarga el front
+          </span>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.25rem;">
+        <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Usuarios Disponibles (GET /api/users/mock/users)</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre / Email</th>
+                <th>Rol</th>
+                <th>User ID</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="4" class="muted-text">Cargando usuarios...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: CURSOS -->
+    <section id="sec-courses" class="card">
+      <div class="card-header">
+        <h2>(3) Cursos y Cohortes</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchCourseState()">↻ Recargar Estado</button>
+        </div>
+      </div>
+      <div id="courses-alert"></div>
+
+      <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Cohortes y Alumnos Matriculados (GET /api/course/mock/state)</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Cohorte</th>
+              <th>Nombre / Descripción</th>
+              <th>Código Invitación</th>
+              <th>Estado</th>
+              <th>Matriculados</th>
+            </tr>
+          </thead>
+          <tbody id="cohorts-tbody">
+            <tr><td colspan="5" class="muted-text">Cargando estado de cursos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        <!-- Form Crear Cohorte -->
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border);">
+          <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary);">Form: Crear Cohorte (POST /api/course/course-cohorts)</h4>
+          <p class="muted-text" style="margin-bottom: 0.75rem;">Se crea en estado ACTIVE usando la sesión actual.</p>
+          <form onsubmit="handleCreateCohort(event)">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label>Descripción / Nombre:</label>
+              <input type="text" id="cohort-desc" class="form-control" value="Comisión 4K1 - Turno Noche" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label>CourseBase ID:</label>
+              <input type="text" id="cohort-base-id" class="form-control" value="725a8647-57b9-43d8-9d3c-475ef929c255" required>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <div class="form-group" style="flex:1;">
+                <label>Inicio:</label>
+                <input type="date" id="cohort-start" class="form-control" value="2026-03-01" required>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Fin:</label>
+                <input type="date" id="cohort-end" class="form-control" value="2026-12-31" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success" style="width: 100%;">Crear Cohorte</button>
+          </form>
+        </div>
+
+        <!-- Form Matricular Alumno -->
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border);">
+          <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary);">Form: Matricular Alumno (POST /api/course/mock/course-cohorts/{id}/students)</h4>
+          <p class="muted-text" style="margin-bottom: 0.75rem;">Publica STUDENT_ENROLLED a Kafka (courses.events).</p>
+          <form onsubmit="handleEnrollStudent(event)">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label>ID Cohorte:</label>
+              <input type="text" id="enroll-cohort-id" class="form-control" value="10000000-0000-4000-8000-000000000001" placeholder="UUID de la cohorte" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label>ID Alumno (UUID):</label>
+              <input type="text" id="enroll-student-id" class="form-control" value="30000000-0000-4000-8000-000000000001" placeholder="UUID del alumno" required>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enroll-student-id').value='30000000-0000-4000-8000-000000000001'">Alumno 01</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enroll-student-id').value='30000000-0000-4000-8000-000000000002'">Alumno 02</button>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Matricular Alumno</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 4: DESAFÍOS -->
+    <section id="sec-challenges" class="card">
+      <div class="card-header">
+        <h2>(4) Desafíos (Catálogo y Creación)</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchChallenges()">↻ Recargar Catálogo</button>
+        </div>
+      </div>
+      <div id="challenges-alert"></div>
+
+      <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Catálogo de Desafíos (GET /api/engine-challenge/challenges?page=0&size=100)</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Dificultad</th>
+              <th>Obligatorio</th>
+              <th>Reintentos</th>
+              <th>Umbral</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="challenges-tbody">
+            <tr><td colspan="9" class="muted-text">Cargando desafíos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: var(--code-bg); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 1.5rem;">
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary);">Form: Crear Desafío (POST /api/engine-challenge/challenges)</h4>
+        <p class="muted-text" style="margin-bottom: 0.75rem;">Crea un desafío directamente en estado PUBLISHED con los contratos del Motor.</p>
+        <form onsubmit="handleCreateChallenge(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Título:</label>
+              <input type="text" id="ch-title" class="form-control" value="Desafío Demo de Algoritmos" required>
+            </div>
+            <div class="form-group">
+              <label>Descripción:</label>
+              <input type="text" id="ch-desc" class="form-control" value="Consigna del desafío para el roadmap" required>
+            </div>
+            <div class="form-group">
+              <label>Tipo:</label>
+              <select id="ch-type" class="form-control">
+                <option value="THEORETICAL">THEORETICAL (Teórico)</option>
+                <option value="PRACTICAL" selected>PRACTICAL (Práctico)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Dificultad:</label>
+              <select id="ch-diff" class="form-control">
+                <option value="BASIC">BASIC (Fácil / 100 XP)</option>
+                <option value="MEDIUM" selected>MEDIUM (Medio / 250 XP)</option>
+                <option value="ADVANCED">ADVANCED (Avanzado / 500 XP)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Umbral Aprobación (%):</label>
+              <input type="number" id="ch-threshold" class="form-control" value="60" min="1" max="100" required>
+            </div>
+            <div class="form-group">
+              <label>Reintentos Máximos:</label>
+              <input type="number" id="ch-retries" class="form-control" value="3" min="1" max="10" required>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="ch-mandatory" checked style="width: 18px; height: 18px;">
+                <span>Obligatorio (mandatory)</span>
+              </label>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button type="submit" class="btn btn-success">Crear Desafío</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 5: INTENTOS Y CIERRE -->
+    <section id="sec-attempts" class="card">
+      <div class="card-header">
+        <h2>(5) Intentos y Cierre de Desafíos</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchAttempts()">↻ Recargar Intentos</button>
+        </div>
+      </div>
+      <div id="attempts-alert"></div>
+
+      <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Intentos Activos y Cerrados (GET /api/engine-challenge/mock/attempts)</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Intento</th>
+              <th>Alumno ID</th>
+              <th>Desafío ID</th>
+              <th>Cohorte ID</th>
+              <th>Nodo ID</th>
+              <th>Estado</th>
+              <th>Acciones de Cierre</th>
+            </tr>
+          </thead>
+          <tbody id="attempts-tbody">
+            <tr><td colspan="7" class="muted-text">Cargando intentos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: var(--code-bg); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 1.5rem;">
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary);">Form: Cierre Directo (POST /api/engine-challenge/mock/close)</h4>
+        <p class="muted-text" style="margin-bottom: 0.75rem;">Permite simular el cierre de un desafío sin pasar por un intento abierto. Publica CHALLENGE_COMPLETED a Kafka.</p>
+        <form onsubmit="handleDirectClose(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>ID Alumno (studentId):</label>
+              <input type="text" id="close-student-id" class="form-control" value="30000000-0000-4000-8000-000000000001" required>
+            </div>
+            <div class="form-group">
+              <label>ID Cohorte (courseId):</label>
+              <input type="text" id="close-course-id" class="form-control" value="10000000-0000-4000-8000-000000000001" required>
+            </div>
+            <div class="form-group">
+              <label>ID Desafío (challengeId):</label>
+              <input type="text" id="close-challenge-id" class="form-control" value="40000000-0000-4000-8000-000000000001" required>
+            </div>
+            <div class="form-group">
+              <label>ID Nodo (nodeId opcional):</label>
+              <input type="text" id="close-node-id" class="form-control" placeholder="Dejar vacío si no aplica">
+            </div>
+            <div class="form-group">
+              <label>Veredicto:</label>
+              <select id="close-approved" class="form-control">
+                <option value="true" selected>Aprobado (APPROVED)</option>
+                <option value="false">Desaprobado (DISAPPROVE)</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Ejecutar Cierre Directo</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Published Envelope Display -->
+      <div style="margin-top: 1.5rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #38bdf8;">Último Envelope Kafka Publicado:</h4>
+        <pre class="code-block" id="envelope-display">// Ningún evento publicado recientemente desde este panel.</pre>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 6: PARÁMETROS -->
+    <section id="sec-params" class="card">
+      <div class="card-header">
+        <h2>(6) Parámetros Globales Backoffice</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="fetchParameters()">↻ Recargar Parámetros</button>
+        </div>
+      </div>
+      <div id="params-alert"></div>
+
+      <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Parámetros Vigentes (GET /api/backoffice/parameters)</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 140px;">Clave (Key)</th>
+              <th>Valor (JSON)</th>
+              <th style="width: 120px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="params-tbody">
+            <tr><td colspan="3" class="muted-text">Cargando parámetros...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: var(--code-bg); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 1.5rem;">
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary);">Editor: Modificar Parámetro (PUT /api/backoffice/mock/parameters/{key})</h4>
+        <p class="muted-text" style="margin-bottom: 0.75rem;">Publica GLOBAL_CONFIGURATION_CHANGED en administration.events para invalidar la caché de roadmap.</p>
+        <form onsubmit="handleSaveParameter(event)">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label>Clave (Key):</label>
+            <input type="text" id="param-key" class="form-control" value="PAR-09" placeholder="Ej: PAR-01, PAR-09, PAR-12" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label>Valor JSON ({ value: ... }):</label>
+            <textarea id="param-value" class="form-control" rows="6" placeholder="Escribe el JSON del valor..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Guardar Parámetro</button>
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // --- ESTADO Y UTILIDADES ---
+    const KNOWN_SERVICES = [
+      { app: 'USERS-SERVICE', segment: 'users', label: 'Usuarios y Auth' },
+      { app: 'COURSE-SERVICE', segment: 'course', label: 'Cursos y Cohortes' },
+      { app: 'ENGINE-CHALLENGE-SERVICE', segment: 'engine-challenge', label: 'Motor de Desafíos' },
+      { app: 'BACKOFFICE-SERVICE', segment: 'backoffice', label: 'Backoffice / Parámetros' }
+    ];
+
+    const SEED_USERS = [
+      { id: '2db91e4f-a408-4b4f-85ec-a68804984cad', email: 'profesor@utn.edu.ar', role: 'PROFESSOR', name: 'Profesor Demo' },
+      { id: 'c0ffee00-aaaa-4bbb-8ccc-ddddeeeeffff', email: 'gestor@utn.edu.ar', role: 'GESTOR', name: 'Gestor Demo' },
+      { id: '00000000-0000-0000-0000-000000000001', email: 'admin@utn.edu.ar', role: 'ADMIN', name: 'Administrador' },
+      { id: '30000000-0000-4000-8000-000000000001', email: 'alumno01@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 01 (Limpio 0 XP)' },
+      { id: '30000000-0000-4000-8000-000000000002', email: 'alumno02@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 02 (0 vidas)' },
+      { id: '30000000-0000-4000-8000-000000000003', email: 'alumno03@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 03' },
+      { id: '30000000-0000-4000-8000-000000000004', email: 'alumno04@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 04' },
+      { id: '30000000-0000-4000-8000-000000000005', email: 'alumno05@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 05' },
+      { id: '30000000-0000-4000-8000-000000000006', email: 'alumno06@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 06' },
+      { id: '30000000-0000-4000-8000-000000000007', email: 'alumno07@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 07' },
+      { id: '30000000-0000-4000-8000-000000000008', email: 'alumno08@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 08' },
+      { id: '30000000-0000-4000-8000-000000000009', email: 'alumno09@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 09' },
+      { id: '30000000-0000-4000-8000-000000000010', email: 'alumno10@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 10' },
+      { id: '30000000-0000-4000-8000-000000000011', email: 'alumno11@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 11' },
+      { id: '30000000-0000-4000-8000-000000000012', email: 'alumno12@frc.utn.edu.ar', role: 'STUDENT', name: 'Alumno 12' }
+    ];
+
+    async function apiRequest(path, options = {}) {
+      try {
+        const res = await fetch(path, {
+          credentials: 'same-origin',
+          ...options,
+          headers: {
+            'Accept': 'application/json, application/problem+json;q=0.9',
+            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...options.headers
+          }
+        });
+
+        let data = null;
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('json')) {
+          try { data = await res.json(); } catch (e) { data = null; }
+        } else {
+          const text = await res.text();
+          data = text ? { raw: text } : null;
+        }
+
+        return { ok: res.ok, status: res.status, data };
+      } catch (err) {
+        return { ok: false, status: 0, error: err.message, data: { detail: err.message } };
+      }
+    }
+
+    function showAlert(containerId, type, message) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = `
+        <div class="alert alert-${type}">
+          <span>${message}</span>
+          <button style="background:transparent; border:none; color:inherit; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>
+        </div>
+      `;
+    }
+
+    function clearAlert(containerId) {
+      const el = document.getElementById(containerId);
+      if (el) el.innerHTML = '';
+    }
+
+    function showTab(tabId) {
+      const sections = ['sec-services', 'sec-session', 'sec-courses', 'sec-challenges', 'sec-attempts', 'sec-params'];
+      const navButtons = document.querySelectorAll('nav .nav-btn');
+      navButtons.forEach(btn => btn.classList.remove('active'));
+
+      if (tabId === 'all') {
+        sections.forEach(id => document.getElementById(id)?.classList.remove('section-hidden'));
+        document.querySelector('nav .nav-btn:first-child')?.classList.add('active');
+      } else {
+        sections.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (id === tabId) {
+            el.classList.remove('section-hidden');
+            el.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            el.classList.add('section-hidden');
+          }
+        });
+        // Marcar botón activo
+        Array.from(navButtons).find(btn => btn.getAttribute('onclick')?.includes(tabId))?.classList.add('active');
+      }
+    }
+
+    function copyToClipboard(text, btnElement) {
+      navigator.clipboard.writeText(text).then(() => {
+        const origText = btnElement.innerText;
+        btnElement.innerText = '¡Copiado!';
+        btnElement.classList.remove('btn-primary');
+        btnElement.classList.add('btn-success');
+        setTimeout(() => {
+          btnElement.innerText = origText;
+          btnElement.classList.remove('btn-success');
+          btnElement.classList.add('btn-primary');
+        }, 1500);
+      }).catch(err => {
+        prompt('Copiar ID manualmente:', text);
+      });
+    }
+
+    // --- SECCIÓN 1: SERVICIOS Y FALLAS ---
+    async function fetchRegistry() {
+      const res = await apiRequest('/_mock/registry');
+      const tbody = document.getElementById('services-tbody');
+      if (!tbody) return;
+
+      if (!res.ok) {
+        showAlert('services-alert', 'warning', `No se pudo consultar el registro de Eureka (${res.status}): ${res.data?.detail || res.error || 'Error'}`);
+        return;
+      }
+      clearAlert('services-alert');
+
+      const apps = Array.isArray(res.data) ? res.data : [];
+      let rows = '';
+
+      KNOWN_SERVICES.forEach(svc => {
+        const registered = apps.find(a => a.app?.toUpperCase() === svc.app.toUpperCase());
+        const instances = registered?.instances || [];
+        const isUp = instances.some(i => i.status === 'UP');
+        const instDesc = instances.length > 0 
+          ? instances.map(i => `${i.hostName}:${i.port} [${i.status}]`).join(', ')
+          : '<span class="muted-text">Sin instancias</span>';
+
+        rows += `
+          <tr>
+            <td><strong>${svc.app}</strong><br><span class="muted-text">${svc.label}</span></td>
+            <td><code>${svc.segment}</code></td>
+            <td>
+              <span class="status-indicator ${isUp ? 'up' : 'down'}"></span>
+              <span class="tag ${isUp ? 'tag-up' : 'tag-down'}">${isUp ? 'UP' : 'NO REGISTRADO'}</span>
+            </td>
+            <td><small>${instDesc}</small></td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-danger btn-sm" onclick="setFault('${svc.segment}', 503)">Falla 503</button>
+                <button class="btn btn-warning btn-sm" onclick="setFault('${svc.segment}', 0, 3000)">Lento 3s</button>
+                <button class="btn btn-success btn-sm" onclick="clearFault('${svc.segment}')">Normal</button>
+              </div>
+            </td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="testPing('${svc.segment}')">Ping</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+    async function setFault(segment, status, delayMs = 0) {
+      const body = {};
+      if (status) body.status = Number(status);
+      if (delayMs) body.delayMs = Number(delayMs);
+
+      const res = await apiRequest(`/api/${segment}/mock/fault`, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        showAlert('services-alert', 'info', `Falla aplicada a <strong>${segment}</strong>: ${status ? 'Status ' + status : ''} ${delayMs ? delayMs + 'ms latencia' : ''}`);
+      } else {
+        showAlert('services-alert', 'error', `Error al inyectar falla en ${segment} (${res.status}): ${res.data?.detail || 'Error desconocido'}`);
+      }
+    }
+
+    async function clearFault(segment) {
+      const res = await apiRequest(`/api/${segment}/mock/fault`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        showAlert('services-alert', 'success', `Servicio <strong>${segment}</strong> restablecido a Normal.`);
+      } else {
+        showAlert('services-alert', 'error', `Error al limpiar falla en ${segment} (${res.status}): ${res.data?.detail || 'Error'}`);
+      }
+    }
+
+    async function testPing(segment) {
+      const start = Date.now();
+      const res = await apiRequest(`/api/${segment}/mock/ping`);
+      const elapsed = Date.now() - start;
+      if (res.ok) {
+        showAlert('services-alert', 'success', `[${segment}] Ping exitoso en ${elapsed}ms: ${JSON.stringify(res.data)}`);
+      } else {
+        showAlert('services-alert', 'warning', `[${segment}] Ping respondió ${res.status} (${elapsed}ms): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    // --- SECCIÓN 2: SESIÓN E IDENTIDAD ---
+    async function fetchSession() {
+      const res = await apiRequest('/api/users/me');
+      const titleEl = document.getElementById('current-user-title');
+      const detailEl = document.getElementById('current-user-detail');
+
+      if (res.ok && res.data) {
+        const u = res.data;
+        const roles = Array.isArray(u.roles) ? u.roles.join(', ') : (u.role || 'Sin rol');
+        const name = [u.firstNames, u.lastNames].filter(Boolean).join(' ') || u.email;
+        titleEl.innerHTML = `👤 Sesión Activa: <strong>${name}</strong> (${roles})`;
+        detailEl.innerHTML = `Email: <code>${u.email}</code> | User ID: <code>${u.id}</code> | Estado: <code>${u.accountStatus || 'ACTIVE'}</code>`;
+      } else {
+        titleEl.innerHTML = `👤 Sin Sesión Activa`;
+        detailEl.innerHTML = `Estado: <code>${res.status} Not Authenticated</code>. Haz clic en "Entrar como" abajo para autenticarte.`;
+      }
+    }
+
+    async function fetchUsers() {
+      const tbody = document.getElementById('users-tbody');
+      if (!tbody) return;
+
+      const res = await apiRequest('/api/users/mock/users');
+      let users = [];
+
+      if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+        users = res.data;
+      } else {
+        // Fallback a los usuarios de la semilla §3 si el endpoint aún no está listo
+        users = SEED_USERS;
+        if (!res.ok) {
+          showAlert('session-alert', 'info', `GET /api/users/mock/users respondió ${res.status}. Mostrando usuarios sembrados de §3.`);
+        }
+      }
+
+      let rows = '';
+      users.forEach(u => {
+        const role = Array.isArray(u.roles) ? u.roles.join(',') : (u.role || 'STUDENT');
+        const name = [u.firstNames, u.lastNames].filter(Boolean).join(' ') || u.name || u.email;
+        rows += `
+          <tr>
+            <td><strong>${name}</strong><br><small class="muted-text">${u.email}</small></td>
+            <td><span class="tag tag-role">${role}</span></td>
+            <td><code class="tag-uuid">${u.id}</code></td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="loginAs('${u.id}', '${u.email}')">Entrar como</button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rows;
+    }
+
+    async function loginAs(userId, email) {
+      const res = await apiRequest(`/api/users/mock/login-as/${userId}`, {
+        method: 'POST'
+      });
+
+      if (res.ok) {
+        showAlert('session-alert', 'success', `✅ Has iniciado sesión como <strong>${email}</strong>. <strong>Recarga el front (localhost:4200)</strong> para ver los cambios.`);
+        await fetchSession();
+      } else {
+        showAlert('session-alert', 'error', `Error al iniciar sesión como ${userId} (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    async function logout() {
+      const res = await apiRequest('/api/users/auth/logout', { method: 'POST' });
+      if (res.ok) {
+        showAlert('session-alert', 'info', 'Sesión cerrada. Recuerda recargar el front.');
+        await fetchSession();
+      } else {
+        showAlert('session-alert', 'warning', `Respuesta de logout: ${res.status}`);
+        await fetchSession();
+      }
+    }
+
+    // --- SECCIÓN 3: CURSOS Y COHORTES ---
+    async function fetchCourseState() {
+      const res = await apiRequest('/api/course/mock/state');
+      const tbody = document.getElementById('cohorts-tbody');
+      if (!tbody) return;
+
+      if (!res.ok) {
+        showAlert('courses-alert', 'warning', `No se pudo obtener el estado de cursos (${res.status}): ${res.data?.detail || 'Servicio o endpoint en desarrollo'}`);
+        tbody.innerHTML = `<tr><td colspan="5" class="muted-text">Estado no disponible (${res.status}). Puedes probar crear cohorte o matricular con los formularios abajo.</td></tr>`;
+        return;
+      }
+      clearAlert('courses-alert');
+
+      let cohorts = [];
+      if (Array.isArray(res.data)) {
+        cohortes = res.data;
+      } else if (res.data?.cohorts && Array.isArray(res.data.cohorts)) {
+        cohorts = res.data.cohorts;
+      } else if (res.data?.courseCohorts && Array.isArray(res.data.courseCohorts)) {
+        cohorts = res.data.courseCohorts;
+      }
+
+      if (cohorts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="muted-text">No hay cohortes registradas.</td></tr>`;
+        return;
+      }
+
+      let rows = '';
+      cohorts.forEach(c => {
+        const id = c.id || c.courseCohortId || '-';
+        const name = c.courseBaseName || c.settings?.description || c.name || 'Cohorte';
+        const code = c.invitationCode || '<span class="muted-text">N/A</span>';
+        const status = c.status || 'ACTIVE';
+        const students = Array.isArray(c.students) ? c.students : (Array.isArray(c.enrolledStudents) ? c.enrolledStudents : []);
+        const enrolledCount = students.length;
+        const studentsPreview = students.length > 0 
+          ? `<details><summary>${enrolledCount} alumnos</summary><ul style="padding-left:1rem;">${students.map(s => `<li><code>${typeof s === 'object' ? (s.studentId || s.id) : s}</code></li>`).join('')}</ul></details>`
+          : '0 alumnos';
+
+        rows += `
+          <tr>
+            <td><code class="tag-uuid">${id}</code></td>
+            <td><strong>${name}</strong></td>
+            <td><strong style="color:var(--warning);">${code}</strong></td>
+            <td><span class="tag tag-up">${status}</span></td>
+            <td>${studentsPreview}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+    async function handleCreateCohort(e) {
+      e.preventDefault();
+      const desc = document.getElementById('cohort-desc').value;
+      const baseId = document.getElementById('cohort-base-id').value;
+      const start = document.getElementById('cohort-start').value;
+      const end = document.getElementById('cohort-end').value;
+
+      const payload = {
+        courseBaseId: baseId,
+        startDate: start,
+        endDate: end,
+        settings: {
+          description: desc,
+          color: '#3B82F6',
+          modality: 'PRESENCIAL'
+        }
+      };
+
+      const res = await apiRequest('/api/course/course-cohorts', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showAlert('courses-alert', 'success', `Cohorte creada con éxito. ID: <code>${res.data?.id || 'OK'}</code>`);
+        await fetchCourseState();
+      } else {
+        showAlert('courses-alert', 'error', `Error al crear cohorte (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    async function handleEnrollStudent(e) {
+      e.preventDefault();
+      const cohortId = document.getElementById('enroll-cohort-id').value.trim();
+      const studentId = document.getElementById('enroll-student-id').value.trim();
+
+      const res = await apiRequest(`/api/course/mock/course-cohorts/${encodeURIComponent(cohortId)}/students`, {
+        method: 'POST',
+        body: JSON.stringify({ studentId })
+      });
+
+      if (res.ok) {
+        showAlert('courses-alert', 'success', `Alumno <code>${studentId}</code> matriculado exitosamente en cohorte <code>${cohortId}</code>.`);
+        await fetchCourseState();
+      } else {
+        showAlert('courses-alert', 'error', `Error al matricular alumno (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    // --- SECCIÓN 4: DESAFÍOS ---
+    async function fetchChallenges() {
+      const tbody = document.getElementById('challenges-tbody');
+      if (!tbody) return;
+
+      const res = await apiRequest('/api/engine-challenge/challenges?page=0&size=100');
+      if (!res.ok) {
+        showAlert('challenges-alert', 'warning', `No se pudo obtener el catálogo de desafíos (${res.status}): ${res.data?.detail || 'Servicio o endpoint en desarrollo'}`);
+        tbody.innerHTML = `<tr><td colspan="9" class="muted-text">Catálogo no disponible (${res.status}).</td></tr>`;
+        return;
+      }
+      clearAlert('challenges-alert');
+
+      let list = [];
+      if (Array.isArray(res.data)) {
+        list = res.data;
+      } else if (res.data?.content && Array.isArray(res.data.content)) {
+        list = res.data.content;
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="muted-text">No hay desafíos registrados.</td></tr>`;
+        return;
+      }
+
+      let rows = '';
+      list.forEach(ch => {
+        rows += `
+          <tr>
+            <td><code class="tag-uuid">${ch.id}</code></td>
+            <td><strong>${ch.title || 'Sin título'}</strong></td>
+            <td><span class="tag tag-role">${ch.type || 'PRACTICAL'}</span></td>
+            <td><span class="tag ${ch.difficulty === 'ADVANCED' ? 'tag-down' : (ch.difficulty === 'MEDIUM' ? 'tag-up' : 'tag-role')}">${ch.difficulty || 'BASIC'}</span></td>
+            <td>${ch.mandatory ? 'Sí' : 'No'}</td>
+            <td>${ch.retries ?? '-'}</td>
+            <td>${ch.approvalThreshold ?? '-'}%</td>
+            <td><span class="tag tag-up">${ch.status || 'PUBLISHED'}</span></td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="copyToClipboard('${ch.id}', this)">Copiar ID</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+    async function handleCreateChallenge(e) {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('ch-title').value,
+        description: document.getElementById('ch-desc').value,
+        type: document.getElementById('ch-type').value,
+        difficulty: document.getElementById('ch-diff').value,
+        mandatory: document.getElementById('ch-mandatory').checked,
+        retries: Number(document.getElementById('ch-retries').value),
+        approvalThreshold: Number(document.getElementById('ch-threshold').value)
+      };
+
+      const res = await apiRequest('/api/engine-challenge/challenges', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showAlert('challenges-alert', 'success', `Desafío creado exitosamente. ID: <code>${res.data?.id || 'OK'}</code>`);
+        await fetchChallenges();
+      } else {
+        showAlert('challenges-alert', 'error', `Error al crear desafío (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    // --- SECCIÓN 5: INTENTOS Y CIERRE ---
+    async function fetchAttempts() {
+      const tbody = document.getElementById('attempts-tbody');
+      if (!tbody) return;
+
+      const res = await apiRequest('/api/engine-challenge/mock/attempts');
+      if (!res.ok) {
+        showAlert('attempts-alert', 'warning', `No se pudo obtener la lista de intentos (${res.status}): ${res.data?.detail || 'Servicio o endpoint en desarrollo'}`);
+        tbody.innerHTML = `<tr><td colspan="7" class="muted-text">Intentos no disponibles (${res.status}). Puedes usar el formulario de cierre directo.</td></tr>`;
+        return;
+      }
+      clearAlert('attempts-alert');
+
+      const attempts = Array.isArray(res.data) ? res.data : (res.data?.attempts || []);
+      if (attempts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="muted-text">No hay intentos registrados.</td></tr>`;
+        return;
+      }
+
+      let rows = '';
+      attempts.forEach(att => {
+        const id = att.id || att.attemptId;
+        const status = att.status || 'IN_PROGRESS';
+        const isClosed = status === 'COMPLETED' || status === 'ABORTED' || status === 'CANCELLED';
+
+        rows += `
+          <tr>
+            <td><code class="tag-uuid">${id}</code></td>
+            <td><small><code>${att.studentId || '-'}</code></small></td>
+            <td><small><code>${att.challengeId || '-'}</code></small></td>
+            <td><small><code>${att.courseId || '-'}</code></small></td>
+            <td><small><code>${att.nodeId || '-'}</code></small></td>
+            <td><span class="tag ${isClosed ? 'tag-down' : 'tag-up'}">${status}</span></td>
+            <td>
+              ${isClosed ? '<span class="muted-text">Cerrado</span>' : `
+                <div class="btn-group">
+                  <button class="btn btn-success btn-sm" onclick="closeAttempt('${id}', true)">Aprobar</button>
+                  <button class="btn btn-danger btn-sm" onclick="closeAttempt('${id}', false)">Desaprobar</button>
+                  <button class="btn btn-warning btn-sm" onclick="abortAttempt('${id}')">Abortar</button>
+                </div>
+              `}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+    async function closeAttempt(attemptId, approved) {
+      const res = await apiRequest(`/api/engine-challenge/mock/attempts/${encodeURIComponent(attemptId)}/close`, {
+        method: 'POST',
+        body: JSON.stringify({ approved })
+      });
+
+      if (res.ok) {
+        showAlert('attempts-alert', 'success', `Intento <code>${attemptId}</code> cerrado como ${approved ? 'APROBADO' : 'DESAPROBADO'}.`);
+        displayEnvelope(res.data);
+        await fetchAttempts();
+      } else {
+        showAlert('attempts-alert', 'error', `Error al cerrar intento (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    async function abortAttempt(attemptId) {
+      const res = await apiRequest(`/api/engine-challenge/mock/attempts/${encodeURIComponent(attemptId)}/abort`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'CANCELLED' })
+      });
+
+      if (res.ok) {
+        showAlert('attempts-alert', 'info', `Intento <code>${attemptId}</code> abortado.`);
+        displayEnvelope(res.data);
+        await fetchAttempts();
+      } else {
+        showAlert('attempts-alert', 'error', `Error al abortar intento (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    async function handleDirectClose(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('close-student-id').value.trim();
+      const courseId = document.getElementById('close-course-id').value.trim();
+      const challengeId = document.getElementById('close-challenge-id').value.trim();
+      const nodeId = document.getElementById('close-node-id').value.trim();
+      const approved = document.getElementById('close-approved').value === 'true';
+
+      const payload = {
+        studentId,
+        courseId,
+        challengeId,
+        approved
+      };
+      if (nodeId) payload.nodeId = nodeId;
+
+      const res = await apiRequest('/api/engine-challenge/mock/close', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showAlert('attempts-alert', 'success', `Cierre directo ejecutado con éxito.`);
+        displayEnvelope(res.data);
+        await fetchAttempts();
+      } else {
+        showAlert('attempts-alert', 'error', `Error en cierre directo (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    function displayEnvelope(data) {
+      const el = document.getElementById('envelope-display');
+      if (!el) return;
+      if (!data) {
+        el.innerText = '// Respuesta sin cuerpo o evento no retornado.';
+        return;
+      }
+      el.innerText = JSON.stringify(data, null, 2);
+    }
+
+    // --- SECCIÓN 6: PARÁMETROS BACKOFFICE ---
+    async function fetchParameters() {
+      const tbody = document.getElementById('params-tbody');
+      if (!tbody) return;
+
+      const res = await apiRequest('/api/backoffice/parameters');
+      if (!res.ok) {
+        showAlert('params-alert', 'warning', `No se pudo obtener los parámetros (${res.status}): ${res.data?.detail || 'Servicio o endpoint en desarrollo'}`);
+        tbody.innerHTML = `<tr><td colspan="3" class="muted-text">Parámetros no disponibles (${res.status}).</td></tr>`;
+        return;
+      }
+      clearAlert('params-alert');
+
+      const params = Array.isArray(res.data) ? res.data : [];
+      if (params.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="muted-text">No hay parámetros definidos.</td></tr>`;
+        return;
+      }
+
+      let rows = '';
+      params.forEach(p => {
+        const valStr = typeof p.value === 'object' ? JSON.stringify(p.value) : String(p.value);
+        rows += `
+          <tr>
+            <td><strong><code>${p.key}</code></strong></td>
+            <td><code style="word-break: break-all;">${valStr}</code></td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="editParameter('${p.key}', ${JSON.stringify(JSON.stringify(p.value))})">Cargar en Editor</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+    function editParameter(key, jsonValueStr) {
+      document.getElementById('param-key').value = key;
+      try {
+        const parsed = JSON.parse(jsonValueStr);
+        document.getElementById('param-value').value = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        document.getElementById('param-value').value = jsonValueStr;
+      }
+      document.getElementById('param-value').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function handleSaveParameter(e) {
+      e.preventDefault();
+      const key = document.getElementById('param-key').value.trim();
+      const rawVal = document.getElementById('param-value').value.trim();
+
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(rawVal);
+      } catch (err) {
+        showAlert('params-alert', 'error', `El valor no es un JSON válido: ${err.message}`);
+        return;
+      }
+
+      const res = await apiRequest(`/api/backoffice/mock/parameters/${encodeURIComponent(key)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: parsedValue })
+      });
+
+      if (res.ok) {
+        showAlert('params-alert', 'success', `Parámetro <strong>${key}</strong> actualizado con éxito. Evento publicado en Kafka.`);
+        await fetchParameters();
+      } else {
+        showAlert('params-alert', 'error', `Error al guardar parámetro (${res.status}): ${res.data?.detail || JSON.stringify(res.data)}`);
+      }
+    }
+
+    // --- INICIALIZACIÓN ---
+    function updateClock() {
+      const clockEl = document.getElementById('clock-display');
+      if (clockEl) {
+        clockEl.innerText = new Date().toLocaleTimeString('es-AR');
+      }
+    }
+
+    async function init() {
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Carga inicial de datos
+      await fetchRegistry();
+      await fetchSession();
+      await fetchUsers();
+      await fetchCourseState();
+      await fetchChallenges();
+      await fetchAttempts();
+      await fetchParameters();
+
+      // Refresco periódico de servicios cada 5 segundos
+      setInterval(fetchRegistry, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

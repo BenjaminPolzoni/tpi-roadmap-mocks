@@ -1,0 +1,376 @@
+###
+# tpi-roadmap-mocks — Flujos HTTP de prueba e integración
+# Formato compatible con IntelliJ HTTP Client y VS Code REST Client
+# Variables de entorno y configuración base
+###
+
+@gateway = http://localhost:8080
+@profId = 2db91e4f-a408-4b4f-85ec-a68804984cad
+@gestorId = c0ffee00-aaaa-4bbb-8ccc-ddddeeeeffff
+@adminId = 00000000-0000-0000-0000-000000000001
+@student01Id = 30000000-0000-4000-8000-000000000001
+@student02Id = 30000000-0000-4000-8000-000000000002
+@demoCohortId = 10000000-0000-4000-8000-000000000001
+@courseBaseId = 20000000-0000-4000-8000-000000000001
+
+# Tokens mock generados para pruebas directas vía Authorization: Bearer
+@profToken = mock.eyJ0eXBlIjoidXNlciIsInN1YiI6IjJkYjkxZTRmLWE0MDgtNGI0Zi04NWVjLWE2ODgwNDk4NGNhZCIsInJvbGVzIjpbIlBST0ZFU1NPUiJdfQ
+@student01Token = mock.eyJ0eXBlIjoidXNlciIsInN1YiI6IjMwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInJvbGVzIjpbIlNUVURFTlQiXX0
+@student02Token = mock.eyJ0eXBlIjoidXNlciIsInN1YiI6IjMwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMiIsInJvbGVzIjpbIlNUVURFTlQiXX0
+
+# ===========================================================================
+# 1. AUTENTICACIÓN Y SESIÓN (users-service)
+# ===========================================================================
+
+### 1.1 Iniciar sesión con email docente
+POST {{gateway}}/api/users/public/auth/login
+Content-Type: application/json
+
+{
+  "email": "profesor@utn.edu.ar",
+  "password": "mock"
+}
+
+### 1.2 Verificar 2FA y obtener cookies fu_at / fu_rt
+# Sustituir challengeId por el devuelto en 1.1
+POST {{gateway}}/api/users/public/auth/2fa/verify
+Content-Type: application/json
+
+{
+  "challengeId": "dummy-challenge-id",
+  "code": "123456"
+}
+
+### 1.3 Consultar datos de usuario autenticado (/me)
+GET {{gateway}}/api/users/me
+Authorization: Bearer {{profToken}}
+
+### 1.4 Refrescar token
+POST {{gateway}}/api/users/public/auth/refresh
+Authorization: Bearer {{profToken}}
+
+### 1.5 Cerrar sesión
+POST {{gateway}}/api/users/auth/logout
+Authorization: Bearer {{profToken}}
+
+### 1.6 Emisión de token de servicio técnico (OAuth2 client_credentials)
+POST {{gateway}}/api/users/public/auth/token
+Content-Type: application/json
+
+{
+  "clientId": "roadmap-service",
+  "clientSecret": "mock",
+  "grantType": "client_credentials",
+  "scope": "challenges.catalog.read",
+  "audience": "engine-challenge-service"
+}
+
+# ===========================================================================
+# 2. PANEL Y DIAGNÓSTICO
+# ===========================================================================
+
+### 2.1 Cargar panel de control en navegador
+GET {{gateway}}/_mock/
+
+### 2.2 Consultar estado de servicios registrados en Eureka
+GET {{gateway}}/_mock/registry
+
+### 2.3 Ping público de Roadmap real
+GET {{gateway}}/api/roadmap/public/ping
+
+### 2.4 Listar intentos activos en el simulador de desafíos
+GET {{gateway}}/api/engine-challenge/mock/attempts
+
+### 2.5 Volcado de estado del servicio de cursos
+GET {{gateway}}/api/course/mock/state
+
+### 2.6 Listado de usuarios sembrados
+GET {{gateway}}/api/users/mock/users
+
+# ===========================================================================
+# 3. ESCENARIO A: DESBLOQUEO PROGRESIVO
+# ===========================================================================
+
+### A.1 Crear nueva cohorte
+# @name createCohort
+POST {{gateway}}/api/course/course-cohorts
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "courseBaseId": "{{courseBaseId}}",
+  "startDate": "2026-03-01",
+  "endDate": "2026-12-15",
+  "settings": {
+    "description": "Cohorte Escenario A",
+    "modality": "HYBRID",
+    "color": "#3B82F6"
+  }
+}
+
+### A.2 Crear desafío D1 (Teórico, BASIC)
+# @name createD1
+POST {{gateway}}/api/engine-challenge/challenges
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "title": "Desafío D1 — Sintaxis Básica",
+  "type": "THEORETICAL",
+  "difficulty": "BASIC",
+  "mandatory": true,
+  "retries": 3,
+  "approvalThreshold": 60
+}
+
+### A.3 Crear desafío D2 (Práctico, MEDIUM)
+# @name createD2
+POST {{gateway}}/api/engine-challenge/challenges
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "title": "Desafío D2 — Control de Flujo",
+  "type": "PRACTICAL",
+  "difficulty": "MEDIUM",
+  "mandatory": true,
+  "retries": 3,
+  "approvalThreshold": 70
+}
+
+### A.4 Crear sección en el roadmap de la cohorte
+# Ajustar ID de cohorte generado en A.1
+POST {{gateway}}/api/roadmap/courses/{{demoCohortId}}/sections
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "name": "Unidad 1 — Fundamentos",
+  "sortOrder": 10
+}
+
+### A.5 Crear nodo N1 (asociado a D1)
+# Ajustar ID de sección y D1
+POST {{gateway}}/api/roadmap/sections/7b14a06e-c71b-4863-84fb-d22d59f77500/nodes
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "type": "THEORETICAL_CHALLENGE",
+  "name": "Nodo N1 — Teórico",
+  "sortOrder": 10,
+  "challengeId": "40000000-0000-4000-8000-000000000001",
+  "mandatory": true
+}
+
+### A.6 Crear nodo N2 (asociado a D2)
+# Ajustar ID de sección y D2
+POST {{gateway}}/api/roadmap/sections/7b14a06e-c71b-4863-84fb-d22d59f77500/nodes
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "type": "PRACTICAL_CHALLENGE",
+  "name": "Nodo N2 — Práctico",
+  "sortOrder": 11,
+  "challengeId": "40000000-0000-4000-8000-000000000002",
+  "mandatory": true
+}
+
+### A.7 Configurar regla ALL [N1] en N2
+# Sustituir {n2Id} y {n1Id}
+PATCH {{gateway}}/api/roadmap/nodes/3ce40657-982f-47dc-bd20-144d790305c5/rules
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "mode": "AND",
+  "prerequisiteNodeIds": [
+    "0031636b-4386-4e98-9017-7a38220d7bd4"
+  ]
+}
+
+### A.8 Matricular Alumno 02 en la cohorte
+POST {{gateway}}/api/course/mock/course-cohorts/{{demoCohortId}}/students
+Content-Type: application/json
+
+{
+  "studentId": "{{student02Id}}"
+}
+
+### A.9 Consultar progreso inicial del alumno (N1 enabled, N2 locked)
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student02Id}}/progress
+Authorization: Bearer {{student02Token}}
+
+### A.10 Simular cierre de D1 desaprobado (no suma XP, N2 sigue locked)
+POST {{gateway}}/api/engine-challenge/mock/close
+Content-Type: application/json
+
+{
+  "studentId": "{{student02Id}}",
+  "courseId": "{{demoCohortId}}",
+  "challengeId": "40000000-0000-4000-8000-000000000001",
+  "approved": false
+}
+
+### A.11 Verificar progreso tras desaprobado (XP sin cambios)
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student02Id}}/progress
+Authorization: Bearer {{student02Token}}
+
+### A.12 Simular cierre de D1 aprobado (suma +100 XP, N1 completed, N2 enabled)
+POST {{gateway}}/api/engine-challenge/mock/close
+Content-Type: application/json
+
+{
+  "studentId": "{{student02Id}}",
+  "courseId": "{{demoCohortId}}",
+  "challengeId": "40000000-0000-4000-8000-000000000001",
+  "approved": true
+}
+
+### A.13 Verificar progreso tras aprobado (N2 se desbloqueó)
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student02Id}}/progress
+Authorization: Bearer {{student02Token}}
+
+### A.14 Simular cierre de D2 aprobado (+250 XP -> Total 350 XP)
+POST {{gateway}}/api/engine-challenge/mock/close
+Content-Type: application/json
+
+{
+  "studentId": "{{student02Id}}",
+  "courseId": "{{demoCohortId}}",
+  "challengeId": "40000000-0000-4000-8000-000000000002",
+  "approved": true
+}
+
+### A.15 Verificar progreso final acumulado
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student02Id}}/progress
+Authorization: Bearer {{student02Token}}
+
+# ===========================================================================
+# 4. ESCENARIO B: REGLAS OR (ANY [N1, N2])
+# ===========================================================================
+
+### B.1 Crear nodo N3 dependiente de N1 o N2
+POST {{gateway}}/api/roadmap/sections/7b14a06e-c71b-4863-84fb-d22d59f77500/nodes
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "type": "PRACTICAL_CHALLENGE",
+  "name": "Nodo N3 — Opcional",
+  "sortOrder": 12,
+  "challengeId": "40000000-0000-4000-8000-000000000003",
+  "mandatory": false
+}
+
+### B.2 Configurar regla ANY (OR) sobre N3
+# Sustituir {n3Id}
+PATCH {{gateway}}/api/roadmap/nodes/2e5f9f8f-626e-429b-a6c5-a5c9539f2f87/rules
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "mode": "OR",
+  "prerequisiteNodeIds": [
+    "0031636b-4386-4e98-9017-7a38220d7bd4",
+    "3ce40657-982f-47dc-bd20-144d790305c5"
+  ]
+}
+
+### B.3 Verificar que N3 está desbloqueado si al menos uno está aprobado
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student01Id}}/progress
+Authorization: Bearer {{student01Token}}
+
+# ===========================================================================
+# 5. ESCENARIO C: SEMILLA DEMO
+# ===========================================================================
+
+### C.1 Consultar detalle de la cohorte demo
+GET {{gateway}}/api/course/course-cohorts/{{demoCohortId}}
+Authorization: Bearer {{profToken}}
+
+### C.2 Consultar grafo completo del roadmap demo
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}
+Authorization: Bearer {{student01Token}}
+
+### C.3 Consultar progreso de Alumno 01 en la cohorte demo
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student01Id}}/progress
+Authorization: Bearer {{student01Token}}
+
+### C.4 Consultar nivel de Alumno 01 (calculado con PAR-09 de backoffice)
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/me/level
+Authorization: Bearer {{student01Token}}
+
+### C.5 Iniciar intento de desafío demo desde roadmap
+POST {{gateway}}/api/roadmap/courses/{{demoCohortId}}/nodes/0031636b-4386-4e98-9017-7a38220d7bd4/start
+Authorization: Bearer {{student01Token}}
+
+### C.6 Registrar intento en el motor de desafíos
+POST {{gateway}}/api/engine-challenge/challenges/40000000-0000-4000-8000-000000000001/intentos
+Authorization: Bearer {{student01Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{demoCohortId}}",
+  "nodeId": "0031636b-4386-4e98-9017-7a38220d7bd4",
+  "attemptType": "NORMAL"
+}
+
+# ===========================================================================
+# 6. ESCENARIO D: IDEMPOTENCIA DE EVENTOS
+# ===========================================================================
+
+### D.1 Enviar cierre de desafío con eventId específico
+POST {{gateway}}/api/engine-challenge/mock/close
+Content-Type: application/json
+
+{
+  "eventId": "99999999-9999-4999-8999-999999999999",
+  "studentId": "{{student01Id}}",
+  "courseId": "{{demoCohortId}}",
+  "challengeId": "40000000-0000-4000-8000-000000000001",
+  "approved": true,
+  "xp": 100
+}
+
+### D.2 Reenviar exactamente el mismo evento (idempotencia en Roadmap)
+POST {{gateway}}/api/engine-challenge/mock/close
+Content-Type: application/json
+
+{
+  "eventId": "99999999-9999-4999-8999-999999999999",
+  "studentId": "{{student01Id}}",
+  "courseId": "{{demoCohortId}}",
+  "challengeId": "40000000-0000-4000-8000-000000000001",
+  "approved": true,
+  "xp": 100
+}
+
+### D.3 Verificar que el progreso no duplicó la XP
+GET {{gateway}}/api/roadmap/courses/{{demoCohortId}}/students/{{student01Id}}/progress
+Authorization: Bearer {{student01Token}}
+
+# ===========================================================================
+# 7. INYECCIÓN Y GESTIÓN DE FALLAS CONTROLADAS (lib/http.mjs)
+# ===========================================================================
+
+### 7.1 Inyectar falla 503 en servicio de cursos (simular caída de micro)
+POST {{gateway}}/api/course/mock/fault
+Content-Type: application/json
+
+{
+  "status": 503,
+  "times": 1
+}
+
+### 7.2 Probar que la llamada falla con 503 problem+json
+GET {{gateway}}/api/course/course-cohorts/me
+Authorization: Bearer {{profToken}}
+
+### 7.3 Limpiar falla inyectada
+DELETE {{gateway}}/api/course/mock/fault
+
+### 7.4 Probar restauración normal del servicio
+GET {{gateway}}/api/course/course-cohorts/me
+Authorization: Bearer {{profToken}}
