@@ -1,6 +1,7 @@
 # tpi-roadmap-mocks — Stack de Mocks e Integración E2E para Roadmap
 
 > 💡 **Si es tu primera vez, empezá por [INSTRUCCIONES.md](INSTRUCCIONES.md) para la guía paso a paso de instalación, configuración y uso.**
+> 📋 Lo que el mock todavía no cubre está en [DEUDA.md](DEUDA.md).
 
 ## 0. Objetivo
 
