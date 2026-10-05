@@ -174,6 +174,18 @@ services:
       event-bus:
         condition: service_healthy
 
+  accounting:
+    build: ./mocks
+    hostname: accounting
+    command: ["node", "services/accounting.mjs"]
+    environment:
+      EUREKA_URL: http://eureka:8761/eureka/
+      PORT: 8098
+      HOSTNAME: accounting
+    depends_on:
+      eureka:
+        condition: service_healthy
+
   roadmap:
     build: ${ROADMAP_PATH:-../tpi-roadmap}
     hostname: roadmap
@@ -201,9 +213,13 @@ services:
       ROADMAP_TECHNICAL_CLIENT_SECRET: mock
       MOTOR_CLIENT_MODE: http
       COURSES_CLIENT_MODE: http
-      COURSES_CATALOG_MODE: stub
-      COURSES_SECTIONS_CLIENT_MODE: stub
-      INVENTORY_CLIENT_MODE: stub
+      COURSES_CATALOG_MODE: http
+      COURSES_SECTIONS_CLIENT_MODE: http
+      COURSES_TOKEN_AUDIENCE: course-service
+      COURSES_SECTIONS_TOKEN_SCOPE: courses.sections.read
+      INVENTORY_CLIENT_MODE: http
+      ACCOUNTING_TOKEN_AUDIENCE: accounting-service
+      ACCOUNTING_TOKEN_SCOPE: accounting.read
       SIMULATION_ENABLED: ${SIMULATION_ENABLED:-true}
 
 volumes:

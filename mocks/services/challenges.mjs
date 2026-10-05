@@ -56,60 +56,80 @@ function defaultXp(difficulty, approved) {
   return d === 'EASY' ? 100 : (d === 'HARD' ? 500 : 250);
 }
 
+const attemptCounters = new Map();
+function nextAttemptNumber(studentId, challengeId) {
+  const k = `${studentId}|${challengeId}`;
+  const n = (attemptCounters.get(k) || 0) + 1;
+  attemptCounters.set(k, n);
+  return n;
+}
+
+function deriveChallengeType(challenge, requested) {
+  const t = String(requested || '').toUpperCase();
+  if (['NORMAL', 'LIVES', 'LLM'].includes(t)) return t;
+  return challenge?.title === 'Recuperación de vida' ? 'LIVES' : 'NORMAL';
+}
+
 function buildClosureEnvelope({
   eventType = 'CHALLENGE_COMPLETED', studentId, courseId, nodeId = null,
   attemptId = randomUUID(), challenge, approved = true, score = null, xp = null,
   reason = 'CANCELLED', detail = null, performedByUserId = null,
-  performedByRole = 'STUDENT', eventId = null
+  performedByRole = 'STUDENT', eventId = null,
+  challengeType = null, attemptNumber = 1
 }) {
   const isCompleted = eventType === 'CHALLENGE_COMPLETED';
   const difficulty = mapDifficulty(challenge?.difficulty || 'BASIC');
-  const calcXp = xp !== null && xp !== undefined ? Math.round(Number(xp)) : (isCompleted ? defaultXp(difficulty, approved) : 0);
+  const cType = deriveChallengeType(challenge, challengeType);
+  const isLives = cType === 'LIVES';
+  const calcXp = isLives ? 0 : (xp !== null && xp !== undefined ? Math.round(Number(xp)) : (isCompleted ? defaultXp(difficulty, approved) : 0));
   const calcScore = score !== null && score !== undefined ? Math.round(Number(score)) : (isCompleted ? (approved ? 85 : 40) : null);
-  const coins = isCompleted && approved ? 100.0 : 0.0;
-  const subtractLive = isCompleted ? !approved : false;
+  const coins = isCompleted && approved && !isLives ? 100.0 : 0.0;
+  const subtractLive = isCompleted && !isLives ? !approved : false;
+  const addLive = isCompleted && isLives && approved;
+  const maxAttempts = Number(challenge.retries || 3);
   const now = new Date().toISOString();
 
   let validReason = null;
   if (!isCompleted) {
     const r = String(reason || 'CANCELLED').toUpperCase();
     validReason = ['EXPIRED', 'ABANDONED'].includes(r) ? r : 'CANCELLED';
+    if (validReason === 'EXPIRED') { performedByUserId = null; performedByRole = 'SYSTEM'; }
+    else if (validReason === 'ABANDONED') { performedByUserId = studentId; performedByRole = 'STUDENT'; }
   }
 
   const payload = {
-    resources: { coins, xp: calcXp, add_live: false, subtract_live: subtractLive, active_item: [] },
+    resources: { coins, xp: calcXp, add_live: addLive, subtract_live: subtractLive, active_item: [] },
     id_user: studentId,
     id_course: courseId,
     id_node: nodeId || null,
     id_attempt: attemptId,
     challenge_id: challenge.id,
     challenge_version: Number(challenge.currentVersion || 1),
-    challenge_type: 'NORMAL',
+    challenge_type: cType,
     content_type: challenge.type === 'THEORETICAL' ? 'THEORETICAL' : 'PRACTICAL',
     difficulty,
     mandatory: Boolean(challenge.mandatory),
-    performed_by_user_id: performedByUserId || studentId,
+    performed_by_user_id: isCompleted ? (performedByUserId || studentId) : performedByUserId,
     performed_by_role: performedByRole,
     result: {
       status: isCompleted ? (approved ? 'APPROVED' : 'DISAPPROVE') : null,
       score: calcScore,
       completedAt: now,
       late: false,
-      attempt_number: 1,
+      attempt_number: attemptNumber,
       resolution_time: 120.0,
       startedAt: now,
       submittedAt: isCompleted ? now : null,
       approval_threshold: Number(challenge.approvalThreshold || 60),
-      max_attempts: Number(challenge.retries || 3),
-      last_attempt: false,
+      max_attempts: maxAttempts,
+      last_attempt: attemptNumber >= maxAttempts,
       closure_reason: validReason,
       closure_detail: isCompleted ? null : (detail || 'Cancelado vía simulador')
     }
   };
 
-  const env = envelope(eventType, PRODUCER_ENGINE, payload);
-  if (eventId) env.eventId = eventId;
-  return env;
+  const { eventId: genId, eventType: _t, ...rest } = envelope(eventType, PRODUCER_ENGINE, payload);
+  return { event_id: eventId || genId, event_type: eventType, ...rest };
 }
 
 const app = createApp(SERVICE_NAME);
@@ -214,7 +234,8 @@ route('post', '/api/engine-challenge/challenges/:id/intentos', (req, res, { para
     courseId: body.courseId || DEFAULT_COURSE_ID,
     nodeId: body.nodeId || null,
     studentId,
-    attemptType: body.attemptType || 'NORMAL',
+    attemptType: deriveChallengeType(challenge, body.attemptType),
+    attemptNumber: nextAttemptNumber(studentId, challenge.id),
     status: 'IN_PROGRESS',
     startedAt: new Date().toISOString()
   };
@@ -252,7 +273,9 @@ route('post', '/api/engine-challenge/mock/attempts/:attemptId/close', async (req
     score: body.score,
     xp: body.xp,
     performedByUserId: identity?.userId || attempt.studentId,
-    performedByRole: 'STUDENT'
+    performedByRole: 'STUDENT',
+    challengeType: attempt.attemptType,
+    attemptNumber: attempt.attemptNumber
   });
 
   attempt.status = approved ? 'APPROVED' : 'DISAPPROVE';
@@ -288,7 +311,9 @@ route('post', '/api/engine-challenge/mock/attempts/:attemptId/abort', async (req
     reason,
     detail: body.detail || 'Cancelado vía simulador mock',
     performedByUserId: identity?.userId || PROFESSOR_ID,
-    performedByRole: identity?.roles?.includes('ADMIN') ? 'ADMIN' : 'PROFESSOR'
+    performedByRole: identity?.roles?.includes('ADMIN') ? 'ADMIN' : 'PROFESSOR',
+    challengeType: attempt.attemptType,
+    attemptNumber: attempt.attemptNumber
   });
 
   attempt.status = 'ABORTED';
@@ -329,7 +354,9 @@ route('post', '/api/engine-challenge/mock/close', async (req, res, { body, ident
     xp: body.xp,
     performedByUserId: identity?.userId || studentId,
     performedByRole: 'STUDENT',
-    eventId: body.eventId || null
+    eventId: body.eventId || null,
+    challengeType: body.challengeType,
+    attemptNumber: body.attemptNumber || nextAttemptNumber(studentId, challenge.id)
   });
 
   await publish(TOPIC_CHALLENGES_EVENTS, studentId, env);

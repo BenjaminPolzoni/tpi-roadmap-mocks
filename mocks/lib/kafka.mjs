@@ -56,7 +56,7 @@ export function createPublisher(serviceName = process.env.SERVICE_NAME || proces
         }
       ]
     });
-    console.log(`[${serviceName}] -> ${topic} ${env.eventType} ${key}`);
+    console.log(`[${serviceName}] -> ${topic} ${env.event_type || env.eventType} ${key}`);
   }
 
   return { publish, envelope };
